@@ -1,0 +1,9 @@
+# Rule Name: SSH Brute-Force Detection (Failed Attempts)
+# Description: Detects multiple failed SSH authentication attempts from a single source IP.
+# Logic: Triggers when 5 or more failed SSH login attempts are observed from the same IP address.
+# Data Source: Linux authentication logs (auth.log)
+
+index=* ("Failed password")
+| rex "from (?<src_ip>\d+\.\d+\.\d+\.\d+)"
+| stats count as failed_attempts by src_ip
+| where failed_attempts >= 5

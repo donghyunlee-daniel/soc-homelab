@@ -1,0 +1,17 @@
+# Rule Name: SSH Brute-Force Detection (Time-Based)
+# Description: Detects multiple failed SSH authentication attempts from a single source IP
+#              within a short time window, indicating an automated brute-force attack.
+# Logic: Triggers when 5 or more failed SSH login attempts occur from the same IP
+#        within 5 minutes (300 seconds).
+# Data Source: Linux authentication logs (auth.log)
+
+
+index=* ("Failed password")
+| rex "from (?<src_ip>\d+\.\d+\.\d+\.\d+)"
+| stats 
+    count as failed_attempts,
+    min(_time) as first_seen,
+    max(_time) as last_seen
+  by src_ip
+| eval duration = last_seen - first_seen
+| where failed_attempts >= 5 AND duration <= 300
