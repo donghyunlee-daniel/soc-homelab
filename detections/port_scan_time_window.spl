@@ -1,0 +1,17 @@
+# Rule Name: Port Scan Detection (Time-Based)
+# Description: Detects multiple port scan activities from the same source IP to the various ports of the same destination IP
+#              within a short time window, indicating an automated brute-force attack.
+# Logic: Triggers when 5 or more scanning activities occur from the same IP
+#        within 5 minutes (300 seconds).
+# Data Source: UFW logs (ufw.log)
+
+
+index=main sourcetype=ufw
+| rex "SRC=(?<src_ip>\d+\.\d+\.\d+\.\d+)"
+| rex "DPT=(?<dest_port>\d+)"
+| stats dc(dest_port) as scanned_ports,
+min(_time) as first_seen,
+max(_time) as last_seen
+by src_ip
+| eval duration = last_seen - first_seen
+| where scanned_ports >= 5 AND duration <= 60
