@@ -1,0 +1,21 @@
+# Rule Name: SSH Root Brute-Force Detection (Time-Based)
+# Description: Detects multiple failed SSH authentication attempts targeting
+#              the root account from a single source IP within a short time window,
+#              followed by potential successful access.
+# Logic: Counts failed and successful SSH login attempts for the root account
+#        per source IP and calculates the duration between the first and last attempt.
+#        Triggers when 5 or more failed attempts occur within 5 minutes (300 seconds).
+# Data Source: Linux authentication logs (auth.log)
+# Purpose: Identify automated brute-force attacks against the root account,
+#          which represents a high-risk scenario due to elevated privileges.
+
+index=* 
+| rex "from (?<src_ip>\d+\.\d+\.\d+\.\d+)"
+| stats 
+    count(eval(searchmatch("Failed password for root"))) as failed_attempts
+    count(eval(searchmatch("Accepted password for root"))) as successful_attempts
+    min(_time) as first_seen
+    max(_time) as last_seen
+    by src_ip
+| eval duration = last_seen - first_seen
+| where failed_attempts >= 5 AND duration <= 300

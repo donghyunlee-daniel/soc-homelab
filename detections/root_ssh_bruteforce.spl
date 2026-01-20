@@ -1,0 +1,14 @@
+# Rule Name: SSH Root Authentication Summary
+# Description: Summarizes SSH authentication attempts targeting the root account
+#              by counting failed and successful login attempts per source IP.
+# Purpose: Provides visibility into root account access attempts and supports
+#          further analysis or time-based brute-force detection.
+# Data Source: Linux authentication logs (auth.log)
+
+
+index=* 
+| rex "from (?<src_ip>\d+\.\d+\.\d+\.\d+)"
+| stats count(eval(searchmatch("Failed password for root"))) as failed_attempts
+        count(eval(searchmatch("Accepted password for root"))) as successful_attempts
+        by src_ip
+
