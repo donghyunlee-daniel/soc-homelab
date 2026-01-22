@@ -1,0 +1,11 @@
+# Rule Name: SSH Failed Attempts by Source IP and User
+# Description: Aggregates failed SSH authentication attempts by source IP address
+#              and targeted user account to identify focused brute-force behavior.
+# Logic: Counts the number of failed SSH login attempts grouped by src_ip and user.
+#        Useful for identifying which IP is repeatedly targeting a specific account.
+# Data Source: Linux authentication logs (auth.log)
+
+index=* ("Failed password")
+| rex "Failed password for (?<user>\S+)"
+| rex "from (?<src_ip>\d+\.\d+\.\d+\.\d+)"
+| stats count as attempts by src_ip user
